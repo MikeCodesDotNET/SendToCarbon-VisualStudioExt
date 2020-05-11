@@ -45,6 +45,7 @@ namespace Carbon.Helpers
 
             uriBuilder = new UriBuilder(RootUrl);
             parameters = HttpUtility.ParseQueryString(string.Empty);
+
             parameters["bg"] = carbonConfiguration.BackgroundColor;
             parameters["t"] = carbonConfiguration.Theme;
             parameters["wt"] = carbonConfiguration.WindowTheme;

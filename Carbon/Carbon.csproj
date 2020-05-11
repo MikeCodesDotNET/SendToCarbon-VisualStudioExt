@@ -58,10 +58,19 @@
     <Compile Include="Helpers\BufferExt.cs" />
     <Compile Include="Helpers\DocumentExt.cs" />
     <Compile Include="Helpers\EnumExt.cs" />
+    <Compile Include="Helpers\Mvvm\BaseViewModel.cs" />
+    <Compile Include="Helpers\Mvvm\DelegateCommand.cs" />
     <Compile Include="Helpers\SnapshopPointExt.cs" />
     <Compile Include="Helpers\SyntaxSender.cs" />
     <Compile Include="Helpers\TextViewHelper.cs" />
     <Compile Include="Helpers\TextViewListener.cs" />
+    <Compile Include="Options\OptionsDialogPage.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Options\OptionsView.xaml.cs">
+      <DependentUpon>OptionsView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Options\OptionsViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="CarbonPackage.cs" />
     <Compile Include="Services\VisualStudioServices.cs" />
@@ -78,13 +87,17 @@
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis">
@@ -96,7 +109,7 @@
     <PackageReference Include="Microsoft.VisualStudio.SDK" Version="16.0.204" ExcludeAssets="runtime" />
     <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="16.5.2047" />
   </ItemGroup>
-  <ItemGroup>  
+  <ItemGroup>
     <VSCTCompile Include="CarbonPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
       <SubType>Designer</SubType>
@@ -104,6 +117,12 @@
     <Content Include="Resources\EnableDisableCommand.png" />
     <Content Include="Resources\SendMethodCommand.png" />
     <Content Include="Resources\vmark.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="Options\OptionsView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(VSToolsPath)\VSSDK\Microsoft.VsSDK.targets" Condition="'$(VSToolsPath)' != ''" />

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Threading;
+using Carbon.Options;
 using Carbon.Services;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
@@ -28,6 +29,8 @@ namespace Carbon
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(CarbonPackage.guidCarbonPackageString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideOptionPage(typeof(OptionsDialogPage), "Send to Carbon", "General", 0, 0, true)]
+
     public sealed class CarbonPackage : AsyncPackage
     {
         /// <summary>

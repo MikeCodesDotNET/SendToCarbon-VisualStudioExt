@@ -1,14 +1,8 @@
-﻿using Carbon.Services;
-using Microsoft.VisualStudio.Text;
+﻿using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Editor;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.VisualStudio.Shell;
 
 namespace Carbon.Helpers
@@ -17,6 +11,8 @@ namespace Carbon.Helpers
     {
         public static IWpfTextView GetCurrentViewHost()
         {
+            ThreadHelper.ThrowIfNotOnUIThread();
+
             var textManager = (IVsTextManager)ServiceProvider.GlobalProvider.GetService(typeof(SVsTextManager));
             var componentModel = (IComponentModel)ServiceProvider.GlobalProvider.GetService(typeof(SComponentModel));
             var editor = componentModel.GetService<IVsEditorAdaptersFactoryService>();

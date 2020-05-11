@@ -216,6 +216,8 @@ namespace Carbon.Configuration
         [Id("vb")]
         VBNet,
 
+        Auto,
+
     }
 
 
