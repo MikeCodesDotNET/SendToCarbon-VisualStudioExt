@@ -29,8 +29,8 @@
                 <StackPanel>
                     <Label Content="Current Configuration File"/>
                     <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
-                        <TextBox MinWidth="200"></TextBox>
-                        <Button Content="..." Margin="4, 0,0,0" Width="20"></Button>
+                        <TextBox MinWidth="200" Text="{Binding ConfigurationPath}"></TextBox>
+                        <Button Content="..." Margin="4, 0,0,0" Width="20" Command="{Binding SetConfigFileButtonClickedCommand}"></Button>
                     </StackPanel>
                 </StackPanel>
                 

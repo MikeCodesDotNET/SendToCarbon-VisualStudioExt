@@ -115,6 +115,7 @@
       <SubType>Designer</SubType>
     </VSCTCompile>
     <Content Include="Resources\EnableDisableCommand.png" />
+    <Content Include="Resources\menuIcon.png" />
     <Content Include="Resources\SendMethodCommand.png" />
     <Content Include="Resources\vmark.png" />
   </ItemGroup>

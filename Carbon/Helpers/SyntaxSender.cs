@@ -1,5 +1,6 @@
 ﻿using Carbon.Configuration;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.Formatting;
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -24,6 +25,8 @@ namespace Carbon.Helpers
                 MessageBox.Show($"Snippet too long", "The snippet provided had a length of {syntax.Length}. Max is {MaxLength}", MessageBoxButtons.OK);
                 return false;
             }
+
+
 
             var configuration = LocalConfiguration.Default;
 

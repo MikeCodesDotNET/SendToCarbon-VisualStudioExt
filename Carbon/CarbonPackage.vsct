@@ -49,6 +49,7 @@
       <Group guid="guidCarbonPackageCmdSet" id="MyMenuGroup" priority="0x0600">
         <Parent guid="guidCarbonPackageCmdSet" id="TopLevelMenu"/>
       </Group>
+      
       <Group guid="guidCarbonPackageCmdSet1" id="EditorContextMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN" />
       </Group>
@@ -76,9 +77,10 @@
 
       <Button guid="guidCarbonPackageCmdSet1" id="SendMethodCommand" priority="0x0100" type="Button">
         <Parent guid="guidCarbonPackageCmdSet1" id="EditorContextMenuGroup" />
-        <Icon guid="guidImages" id="bmpPic1" />
+        <Icon guid="guidImages" id="menuIcon"/>
+        <CommandFlag>DynamicVisibility</CommandFlag>
         <Strings>
-          <ButtonText>Send Method</ButtonText>
+          <ButtonText>Send To Carbon</ButtonText>
         </Strings>
       </Button>
 
@@ -92,15 +94,30 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\SendMethodCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
-      <Bitmap guid="guidImages" href="Resources\EnableDisableCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough" />
+      <Bitmap guid="guidImages" href="Resources\menuIcon.png" usedList="menuIcon" />
       <Bitmap guid="guidVMarkImage" href="Resources\vmark.png" usedList="vmarkPic1" />
     </Bitmaps>
   </Commands>
 
+  <VisibilityConstraints>
+    <!-- 
+    This will show or hide the button based on the uiContextSupportedFiles which is specified in
+    the ProvideUIContextRule attribute on the package class in MyPackage.cs. 
+    
+    Note, this only applies when the package hasn't been loaded yet. When loaded, the visibility
+    of the button is controlled by the MenuItemQueryStatus method in MyButton.cs.
+    -->
+    <VisibilityItem guid="guidCarbonPackageCmdSet1" id="SendMethodCommand" context="uiContextSupportedFiles" />
+  </VisibilityConstraints>
+  
+  
+
   <Symbols>
     <!-- This is the package guid. -->
     <GuidSymbol name="guidCarbonPackage" value="{e46db443-e97d-4021-8366-84b752023426}" />
+
+    <GuidSymbol name="uiContextSupportedFiles" value="{24551deb-f034-43e9-a279-0e541241687e}" />
+
 
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidCarbonPackageCmdSet" value="{590024c4-edbb-48b4-b482-8e0c6f6ff3a4}">
@@ -115,12 +132,7 @@
     </GuidSymbol>
     
     <GuidSymbol name="guidImages" value="{c562d224-03b6-4f55-ba0f-34ddf862bf2d}">
-      <IDSymbol name="bmpPic1" value="1" />
-      <IDSymbol name="bmpPic2" value="2" />
-      <IDSymbol name="bmpPicSearch" value="3" />
-      <IDSymbol name="bmpPicX" value="4" />
-      <IDSymbol name="bmpPicArrows" value="5" />
-      <IDSymbol name="bmpPicStrikethrough" value="6" />
+      <IDSymbol name="menuIcon" value="1" />
     </GuidSymbol>
 
 

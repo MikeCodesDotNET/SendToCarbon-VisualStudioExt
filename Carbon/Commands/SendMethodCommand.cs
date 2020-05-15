@@ -1,63 +1,113 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.Design;
 using System.Globalization;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Carbon.Helpers;
+using EnvDTE;
+using EnvDTE80;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Formatting;
+using Microsoft.CodeAnalysis.Options;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+using Microsoft.VisualStudio.TextManager.Interop;
 using Task = System.Threading.Tasks.Task;
 
 namespace Carbon.Commands
 {
-    /// <summary>
-    /// Command handler
-    /// </summary>
     internal sealed class SendMethodCommand
     {
-        /// <summary>
-        /// Command ID.
-        /// </summary>
         public const int CommandId = 256;
 
-        /// <summary>
-        /// Command menu group (command set GUID).
-        /// </summary>
         public static readonly Guid CommandSet = new Guid("d5d8efc6-dc17-4229-9088-dddf76ac0ae4");
 
-        /// <summary>
-        /// VS Package that provides this command, not null.
-        /// </summary>
         private readonly AsyncPackage package;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SendMethodCommand"/> class.
-        /// Adds our command handlers for menu (commands must exist in the command table file)
-        /// </summary>
-        /// <param name="package">Owner package, not null.</param>
-        /// <param name="commandService">Command service to add command to, not null.</param>
-        private SendMethodCommand(AsyncPackage package, OleMenuCommandService commandService)
+
+        private SendMethodCommand(AsyncPackage package, IMenuCommandService commandService)
         {
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
             var menuCommandID = new CommandID(CommandSet, CommandId);
-            var menuItem = new MenuCommand(this.Execute, menuCommandID);
-            commandService.AddCommand(menuItem);
+
+            var command = new OleMenuCommand(Execute, menuCommandID)
+            {
+                Supported = true
+            };
+            command.BeforeQueryStatus += Command_BeforeQueryStatus;
+
+            //var menuItem = new MenuCommand(this.Execute, menuCommandID);
+            commandService.AddCommand(command);
         }
 
-        /// <summary>
-        /// Gets the instance of the command.
-        /// </summary>
+        private void Command_BeforeQueryStatus(object sender, EventArgs e)
+        {
+            var button = (MenuCommand)sender;
+            button.Visible = false;
+
+            try
+            {    
+                if(!string.IsNullOrEmpty(SelectedText) && IsSupportedFileType)
+                {
+                    button.Visible = true;
+                }
+            }
+            catch
+            {
+                button.Visible = false;
+            }
+        }
+
+        bool IsSupportedFileType
+        {
+            get
+            {
+                var dte = ServiceProvider.GetServiceAsync(typeof(DTE)).Result as DTE2;
+                ProjectItem item = dte.SelectedItems.Item(1)?.ProjectItem;
+
+                if (item != null)
+                {
+                    string fileExtension = Path.GetExtension(item.Name).ToLowerInvariant();
+                    string[] supportedFiles = new[] { ".cs", ".vb" };
+
+                    // Show the button only if a supported file is selected
+                    return supportedFiles.Contains(fileExtension);
+                }
+                return false;
+            }
+        }
+
+        string SelectedText
+        {
+            get
+            {
+                var service = ServiceProvider.GetServiceAsync(typeof(SVsTextManager)).Result;
+                var textManager = service as IVsTextManager2;
+                IVsTextView view;
+                int result = textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out view);
+
+                view.GetSelection(out int startLine, out int startColumn, out int endLine, out int endColumn); //end could be before beginning
+                view.GetSelectedText(out string selectedText);
+
+                return selectedText;
+            }
+        }
+
+
+    
         public static SendMethodCommand Instance
         {
             get;
             private set;
         }
 
-        /// <summary>
-        /// Gets the service provider from the owner package.
-        /// </summary>
+    
         private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider
         {
             get
@@ -66,48 +116,29 @@ namespace Carbon.Commands
             }
         }
 
-        /// <summary>
-        /// Initializes the singleton instance of the command.
-        /// </summary>
-        /// <param name="package">Owner package, not null.</param>
-        public static async Task InitializeAsync(AsyncPackage package)
-        {
-            // Switch to the main thread - the call to AddCommand in SendMethodCommand's constructor requires
-            // the UI thread.
-            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
 
-            OleMenuCommandService commandService = await package.GetServiceAsync(typeof(IMenuCommandService)) as OleMenuCommandService;
+        public static async Task InitializeAsync(AsyncPackage package, IMenuCommandService commandService)
+        {
+            await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync(package.DisposalToken);
             Instance = new SendMethodCommand(package, commandService);
         }
 
-        /// <summary>
-        /// This function is the callback used to execute the command when the menu item is clicked.
-        /// See the constructor to see how the menu item is associated with this function using
-        /// OleMenuCommandService service and MenuCommand class.
-        /// </summary>
-        /// <param name="sender">Event sender.</param>
-        /// <param name="e">Event args.</param>
+
         private async void Execute(object sender, EventArgs e)
-        {
+        {   
+            var service = await ServiceProvider.GetServiceAsync(typeof(SVsTextManager));
+            var textManager = service as IVsTextManager2;
+            IVsTextView view;
+            int result = textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out view);
 
-            var syntax = await SnapshopPointExt.GetSyntaxNodeAsync();
+            view.GetSelection(out int startLine, out int startColumn, out int endLine, out int endColumn); //end could be before beginning
+            view.GetSelectedText(out string selectedText);
+
             var language = DocumentExt.GetLanguage(DocumentExt.GetCurrentDocument());
+            var syntax = SyntaxFactory.ParseStatement(selectedText);
 
-            SyntaxSender.Send(syntax, language);
-
-
-            //ThreadHelper.ThrowIfNotOnUIThread();
-            //string message = string.Format(CultureInfo.CurrentCulture, "Inside {0}.MenuItemCallback()", this.GetType().FullName);
-            //string title = "SendMethodCommand";
-
-            //// Show a message box to prove we were here
-            //VsShellUtilities.ShowMessageBox(
-            //    this.package,
-            //    message,
-            //    title,
-            //    OLEMSGICON.OLEMSGICON_INFO,
-            //    OLEMSGBUTTON.OLEMSGBUTTON_OK,
-            //    OLEMSGDEFBUTTON.OLEMSGDEFBUTTON_FIRST);
+            var formattedResult = Formatter.Format(syntax, new AdhocWorkspace());
+            SyntaxSender.Send(formattedResult, language);
         }
     }
 }

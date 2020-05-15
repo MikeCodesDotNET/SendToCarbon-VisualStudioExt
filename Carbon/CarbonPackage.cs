@@ -1,10 +1,13 @@
 ﻿using System;
+using System.ComponentModel.Design;
 using System.Runtime.InteropServices;
 using System.Threading;
 using Carbon.Options;
 using Carbon.Services;
+using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
 using Task = System.Threading.Tasks.Task;
 
 namespace Carbon
@@ -29,8 +32,13 @@ namespace Carbon
     [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
     [Guid(CarbonPackage.guidCarbonPackageString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
+    [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
+    //[ProvideUIContextRule(uiContextSupportedFiles,
+    //    name: "Supported Files",
+    //    expression: "CSharp | VisualBasic",
+    //    termNames: new[] { "CSharp", "VisualBasic" },
+    //    termValues: new[] { "HierSingleSelectionName:.cs$", "HierSingleSelectionName:.vb$" })]
     [ProvideOptionPage(typeof(OptionsDialogPage), "Send to Carbon", "General", 0, 0, true)]
-
     public sealed class CarbonPackage : AsyncPackage
     {
         /// <summary>
@@ -41,6 +49,9 @@ namespace Carbon
 
         public const string guidCarbonPackageCmdSetString = "590024c4-edbb-48b4-b482-8e0c6f6ff3a4";
         public static Guid guidCarbonPackageCmdSet = new Guid(guidCarbonPackageCmdSetString);
+
+        private const string uiContextSupportedFiles = "24551deb-f034-43e9-a279-0e541241687e"; // Must match guid in VsCommandTable.vsct
+
 
         public const string guidImagesString = "c562d224-03b6-4f55-ba0f-34ddf862bf2d";
         public static Guid guidImages = new Guid(guidImagesString);
@@ -59,10 +70,13 @@ namespace Carbon
         /// <returns>A task representing the async work of package initialization, or an already completed task if there is none. Do not return null from this method.</returns>
         protected override async Task InitializeAsync(CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
         {
+            await base.InitializeAsync(cancellationToken, progress);
+            var commandService = await GetServiceAsync((typeof(IMenuCommandService))) as IMenuCommandService;
+
             // When initialized asynchronously, the current thread may be a background thread at this point.
             // Do any initialization that requires the UI thread after switching to the UI thread.
             await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            await Carbon.Commands.SendMethodCommand.InitializeAsync(this);
+            await Carbon.Commands.SendMethodCommand.InitializeAsync(this, commandService);
             await Carbon.Commands.EnableDisableCommand.InitializeAsync(this);
 
             await Task.Factory.StartNew(() => VisualStudioServices.ComponentModel = GetService(typeof(SComponentModel)) as IComponentModel);
