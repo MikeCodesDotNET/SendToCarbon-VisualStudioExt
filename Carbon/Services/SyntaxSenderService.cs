@@ -1,26 +1,37 @@
-﻿using Carbon.Configuration;
+﻿using Carbon.CarbonTypes;
+using Carbon.Configuration;
+
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Formatting;
+
 using System;
-using System.Collections.Generic;
 using System.Collections.Specialized;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web;
 using System.Windows.Forms;
+using Carbon.Helpers;
+using Carbon.Helpers.Extensions;
 
-namespace Carbon.Helpers
+namespace Carbon.Services
 {
-    public static class SyntaxSender
+    public static class SyntaxSenderService
     {
-        static int MaxLength = 1000;
-        static string RootUrl => "https://carbon.now.sh";
+        private static int MaxLength = 1000;
+
+        private static string RootUrl => "https://carbon.now.sh";
 
 
         public static bool Send(SyntaxNode syntax, Language language)
         {
-            if (syntax.ToFullString().Length > MaxLength)
+            string sourceCode = string.Empty;
+            if (GeneralSettings.Default.IncludeTrivia)
+            {
+                sourceCode = syntax.ToFullString();
+            }
+            else
+            {
+                sourceCode = syntax.ToString();
+            }
+
+            if (sourceCode.Length > MaxLength)
             {
                 MessageBox.Show($"Snippet too long", "The snippet provided had a length of {syntax.Length}. Max is {MaxLength}", MessageBoxButtons.OK);
                 return false;
@@ -37,11 +48,12 @@ namespace Carbon.Helpers
             UriBuilder uriBuilder;
             NameValueCollection parameters;
 
-            if (configuration.UseBrowserCache)
+            if (GeneralSettings.Default.UseBrowserCache)
             {
                 uriBuilder = new UriBuilder(RootUrl);
                 parameters = HttpUtility.ParseQueryString(string.Empty);
-                parameters["code"] = syntax.ToFullString();
+                parameters["code"] = @sourceCode;
+                uriBuilder.Query = parameters.ToString();
                 BrowserHelper.OpenUrl(uriBuilder.Uri);
                 return true;
             }
@@ -67,12 +79,12 @@ namespace Carbon.Helpers
             parameters["wm"] = carbonConfiguration.Watermark.ToString().ToLower();
             parameters["ts"] = true.ToString().ToLower();
             parameters["es"] = carbonConfiguration.ExportSize;
-            parameters["code"] = syntax.ToFullString();
+            parameters["code"] = @sourceCode;
             uriBuilder.Query = parameters.ToString();
             BrowserHelper.OpenUrl(uriBuilder.Uri);
 
             return true;
         }
     }
-    
+
 }

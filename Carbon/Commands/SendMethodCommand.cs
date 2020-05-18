@@ -1,27 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+using System;
 using System.ComponentModel.Design;
-using System.Globalization;
 using System.IO;
+
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Carbon.Helpers;
+
+using Carbon.Services;
 using EnvDTE;
 using EnvDTE80;
 using Microsoft.CodeAnalysis;
+
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Formatting;
-using Microsoft.CodeAnalysis.Options;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.TextManager.Interop;
+
 using Task = System.Threading.Tasks.Task;
 
 namespace Carbon.Commands
 {
     internal sealed class SendMethodCommand
     {
+
         public const int CommandId = 256;
 
         public static readonly Guid CommandSet = new Guid("d5d8efc6-dc17-4229-9088-dddf76ac0ae4");
@@ -34,9 +35,9 @@ namespace Carbon.Commands
             this.package = package ?? throw new ArgumentNullException(nameof(package));
             commandService = commandService ?? throw new ArgumentNullException(nameof(commandService));
 
-            var menuCommandID = new CommandID(CommandSet, CommandId);
+            CommandID menuCommandID = new CommandID(CommandSet, CommandId);
 
-            var command = new OleMenuCommand(Execute, menuCommandID)
+            OleMenuCommand command = new OleMenuCommand(Execute, menuCommandID)
             {
                 Supported = true
             };
@@ -48,11 +49,11 @@ namespace Carbon.Commands
 
         private void Command_BeforeQueryStatus(object sender, EventArgs e)
         {
-            var button = (MenuCommand)sender;
+            MenuCommand button = (MenuCommand)sender;
             button.Visible = false;
 
             try
-            {    
+            {
                 if(!string.IsNullOrEmpty(SelectedText) && IsSupportedFileType)
                 {
                     button.Visible = true;
@@ -64,18 +65,75 @@ namespace Carbon.Commands
             }
         }
 
-        bool IsSupportedFileType
+
+        private async void Execute(object sender, EventArgs e)
+        {
+            object service = await ServiceProvider.GetServiceAsync(typeof(SVsTextManager));
+            IVsTextManager2 textManager = service as IVsTextManager2;
+            _ = textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out IVsTextView view);
+
+            view.GetSelection(out _, out _, out _, out _); //end could be before beginning
+            view.GetSelectedText(out string selectedText);
+
+            StatementSyntax syntax = SyntaxFactory.ParseStatement(selectedText);
+
+            SyntaxNode formattedResult = Formatter.Format(syntax, new AdhocWorkspace());
+            SyntaxSenderService.Send(formattedResult, Language);
+        }
+
+
+        string[] supportedFiles = new[] { ".cs", ".vb", ".fs", ".xaml", 
+                                            ".html", ".json" };
+
+
+        private CarbonTypes.Language Language
         {
             get
             {
-                var dte = ServiceProvider.GetServiceAsync(typeof(DTE)).Result as DTE2;
+                DTE2 dte = ServiceProvider.GetServiceAsync(typeof(DTE)).Result as DTE2;
                 ProjectItem item = dte.SelectedItems.Item(1)?.ProjectItem;
 
                 if (item != null)
                 {
                     string fileExtension = Path.GetExtension(item.Name).ToLowerInvariant();
-                    string[] supportedFiles = new[] { ".cs", ".vb" };
 
+                    if (fileExtension == ".cs")
+                        return CarbonTypes.Language.CSharp;
+
+                    if(fileExtension == ".vb")
+                        return CarbonTypes.Language.VBNet;
+
+                    if (fileExtension == ".fs")
+                        return CarbonTypes.Language.FSharp;
+
+                    if (fileExtension == ".xaml")
+                        return CarbonTypes.Language.XAML;
+
+                    if (fileExtension == ".html")
+                        return CarbonTypes.Language.HTML;
+
+                    if (fileExtension == ".json")
+                        return CarbonTypes.Language.JSON;
+
+
+                    return CarbonTypes.Language.Unknown;
+
+                }
+                return CarbonTypes.Language.Unknown;
+            }
+        }
+
+
+        private bool IsSupportedFileType
+        {
+            get
+            {
+                DTE2 dte = ServiceProvider.GetServiceAsync(typeof(DTE)).Result as DTE2;
+                ProjectItem item = dte.SelectedItems.Item(1)?.ProjectItem;
+
+                if(item != null)
+                {
+                    string fileExtension = Path.GetExtension(item.Name).ToLowerInvariant();
                     // Show the button only if a supported file is selected
                     return supportedFiles.Contains(fileExtension);
                 }
@@ -83,16 +141,15 @@ namespace Carbon.Commands
             }
         }
 
-        string SelectedText
+        private string SelectedText
         {
             get
             {
-                var service = ServiceProvider.GetServiceAsync(typeof(SVsTextManager)).Result;
-                var textManager = service as IVsTextManager2;
-                IVsTextView view;
-                int result = textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out view);
+                object service = ServiceProvider.GetServiceAsync(typeof(SVsTextManager)).Result;
+                IVsTextManager2 textManager = service as IVsTextManager2;
+                _ = textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out IVsTextView view);
 
-                view.GetSelection(out int startLine, out int startColumn, out int endLine, out int endColumn); //end could be before beginning
+                view.GetSelection(out _, out _, out _, out _); //end could be before beginning
                 view.GetSelectedText(out string selectedText);
 
                 return selectedText;
@@ -100,21 +157,7 @@ namespace Carbon.Commands
         }
 
 
-    
-        public static SendMethodCommand Instance
-        {
-            get;
-            private set;
-        }
-
-    
-        private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider
-        {
-            get
-            {
-                return this.package;
-            }
-        }
+        private Microsoft.VisualStudio.Shell.IAsyncServiceProvider ServiceProvider => package;
 
 
         public static async Task InitializeAsync(AsyncPackage package, IMenuCommandService commandService)
@@ -124,21 +167,7 @@ namespace Carbon.Commands
         }
 
 
-        private async void Execute(object sender, EventArgs e)
-        {   
-            var service = await ServiceProvider.GetServiceAsync(typeof(SVsTextManager));
-            var textManager = service as IVsTextManager2;
-            IVsTextView view;
-            int result = textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftCodeWindow, out view);
+        public static SendMethodCommand Instance { get; private set; }
 
-            view.GetSelection(out int startLine, out int startColumn, out int endLine, out int endColumn); //end could be before beginning
-            view.GetSelectedText(out string selectedText);
-
-            var language = DocumentExt.GetLanguage(DocumentExt.GetCurrentDocument());
-            var syntax = SyntaxFactory.ParseStatement(selectedText);
-
-            var formattedResult = Formatter.Format(syntax, new AdhocWorkspace());
-            SyntaxSender.Send(formattedResult, language);
-        }
     }
 }

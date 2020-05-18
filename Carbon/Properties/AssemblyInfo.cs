@@ -1,16 +1,15 @@
 ﻿using System.Reflection;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Carbon")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("Send to Carbon")]
+[assembly: AssemblyDescription("Visual Studio 2019 Extension for sending code snippets to Carbon.now.sh")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Carbon")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyCompany("hello@mikejames.dev")]
+[assembly: AssemblyProduct("Send to Carbon")]
+[assembly: AssemblyCopyright("Mike James 2020")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

@@ -22,5 +22,29 @@ namespace Carbon {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool UseBrowserCache {
+            get {
+                return ((bool)(this["UseBrowserCache"]));
+            }
+            set {
+                this["UseBrowserCache"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool IncludeTrivia {
+            get {
+                return ((bool)(this["IncludeTrivia"]));
+            }
+            set {
+                this["IncludeTrivia"] = value;
+            }
+        }
     }
 }

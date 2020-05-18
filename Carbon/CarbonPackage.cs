@@ -1,13 +1,14 @@
-﻿using System;
-using System.ComponentModel.Design;
-using System.Runtime.InteropServices;
-using System.Threading;
-using Carbon.Options;
-using Carbon.Services;
-using Microsoft.VisualStudio;
+﻿using Carbon.Services;
+using Carbon.UI;
 using Microsoft.VisualStudio.ComponentModelHost;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
+
+using System;
+using System.ComponentModel.Design;
+using System.Runtime.InteropServices;
+using System.Threading;
+
 using Task = System.Threading.Tasks.Task;
 
 namespace Carbon
@@ -75,15 +76,14 @@ namespace Carbon
 
             // When initialized asynchronously, the current thread may be a background thread at this point.
             // Do any initialization that requires the UI thread after switching to the UI thread.
-            await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
-            await Carbon.Commands.SendMethodCommand.InitializeAsync(this, commandService);
-            await Carbon.Commands.EnableDisableCommand.InitializeAsync(this);
+            await JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+            await Commands.SendMethodCommand.InitializeAsync(this, commandService);
 
             await Task.Factory.StartNew(() => VisualStudioServices.ComponentModel = GetService(typeof(SComponentModel)) as IComponentModel);
         }
 
         #endregion
-     
+
 
     }
 }
