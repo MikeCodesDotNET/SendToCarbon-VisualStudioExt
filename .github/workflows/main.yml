@@ -35,8 +35,27 @@ jobs:
     - name: Build and Publish Extension
       run: msbuild Carbon.sln /p:Configuration=Release 
  
-    - name: Upload Artifact
-      uses: actions/upload-artifact@v1.0.0
+    - name: Create a Release
+      uses: actions/create-release@v1
+      env:
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        name: published_webapp
-        path: bin\Release\Publish
+        # The name of the tag. This should come from the webhook payload, `github.GITHUB_REF` when a user pushes a new tag
+        tag_name: ${{ github.ref }}
+        # The name of the release. For example, `Release v1.0.1`
+        release_name: Release ${{ github.ref }}
+        body: "Automated release for the latest 'stable' build of the Carbon Now extension"
+        draft: false
+        prerelease: true
+
+
+    - name: Upload a Release Asset
+      uses: actions/upload-release-asset@v1.0.2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        # The URL for uploading assets to the release
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./my-artifact.zip
+        asset_name: my-artifact.zip
+        asset_content_type: application/zip
