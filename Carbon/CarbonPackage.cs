@@ -34,11 +34,6 @@ namespace Carbon
     [Guid(CarbonPackage.guidCarbonPackageString)]
     [ProvideMenuResource("Menus.ctmenu", 1)]
     [ProvideAutoLoad(UIContextGuids80.NoSolution, PackageAutoLoadFlags.BackgroundLoad)]
-    //[ProvideUIContextRule(uiContextSupportedFiles,
-    //    name: "Supported Files",
-    //    expression: "CSharp | VisualBasic",
-    //    termNames: new[] { "CSharp", "VisualBasic" },
-    //    termValues: new[] { "HierSingleSelectionName:.cs$", "HierSingleSelectionName:.vb$" })]
     [ProvideOptionPage(typeof(OptionsDialogPage), "Send to Carbon", "General", 0, 0, true)]
     public sealed class CarbonPackage : AsyncPackage
     {
